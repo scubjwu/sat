@@ -128,3 +128,5 @@ def test():
 	queens_cnf_input()
 	cnf_create(N_queens_cnf_create)
 
+if __name__ == "__main__":
+	test()

@@ -3,7 +3,7 @@ import cnf
 
 MAX_FLIPS = 0
 MAX_TRIES = 1000
-origin_sn = 0
+CONTENT=[]
 
 split_pattern = cnf.split_pattern
 
@@ -14,106 +14,94 @@ def random_T_assign(num):
 
 	return tmp_L
 
-def cal_sn(T_assign, fd):
+def cal_sn(T_assign):
 	sn = 0
-	fd.seek(0)
-	fd.readline()
 
-	while True:
-		line = fd.readline()
-		if line == "":
-			break
-
-		line_list = line.split(split_pattern)
-		i = 0
+	for i in xrange(1, len(CONTENT)):
 		c_res = False
-
-		while True:
-			if c_res or line_list[i] == "" or i == line_list.__len__() - 1:
-				if c_res:
-					sn = sn + 1
-				break
-
-			key = int(line_list[i])
+		len_c = len(CONTENT[i]) - 1
+		for j in xrange(0, len_c):
+			key = int(CONTENT[i][j])
 			if key < 0:
 				c_res = c_res or (not T_assign[-key])
 			else:
 				c_res = c_res or T_assign[key]
 
-			i = i + 1
+			if c_res:
+				sn = sn + 1
+				break
+
 	
 	return sn
 
-def pre_test(T_assign, fd):
-	origin_sn = cal_sn(T_assign, fd)
-
-def test_sat(T_assign, fd):
-	fd.seek(0)
-	fd.readline()
+def test_sat(T_assign):
 	res = True
 
-	#start to real test
-	while True:
-		line = fd.readline()
-		if line == "" or res == False:
+	for i in xrange(1, len(CONTENT)):
+		if res == False:
 			break
 
-		line_list = line.split(split_pattern)
-		i = 0
 		c_res = False
-		while True:
-			if c_res or line_list[i] == "" or i == line_list.__len__() - 1:
-				break
-
-			key = int(line_list[i])
+		len_c = len(CONTENT[i]) - 1
+		for j in xrange(0, len_c):
+			key = int(CONTENT[i][j])
 			if key < 0:
 				c_res = c_res or (not T_assign[-key])
 			else:
 				c_res = c_res or T_assign[key]
 
-			i = i + 1
+			if c_res:
+				break
 
 		res = res and c_res
 
 	return res
 
-def get_candidate(T_assign, fd):
+def get_candidate(T_assign):
 	maxIncrease = 0
 	res = -1
 
 	for i in xrange(1, len(T_assign)+1):
 		#flip and record...
 		T_assign[i] = not T_assign[i]
-		candidate_sn = cal_sn(T_assign, fd)
-		changes = candidate_sn - origin_sn
-		if changes > maxIncrease:
-			maxIncrease = changes
+		candidate_sn = cal_sn(T_assign)
+		if candidate_sn > maxIncrease:
+			maxIncrease = candidate_sn
 			res = i
 
 		T_assign[i] = not T_assign[i]
 		
 	return res
 
-def GSAT():
-	fd = file(cnf.cnf_file, 'r')
-	line = fd.readline()
-	line_list = line.split(split_pattern)
+def handle_cnf():
+	global CONTENT
+
+	fd = file(cnf.cnf_file, "r")
+	lines = fd.readlines()
+	fd.close()
 	
-	var = (int)(line_list[2])
+	n = len(lines)
+	CONTENT = [0]*n
+	for i in xrange(0, n):
+		CONTENT[i] = lines[i].split(split_pattern)
+
+def GSAT():
+	handle_cnf();
+	
+	var = (int)(CONTENT[0][2])
 	MAX_FLIPS = var*5
-	clauses = (int)(line_list[3])
+	clauses = (int)(CONTENT[0][3])
 
 	for i in xrange(1, MAX_TRIES+1):
 		T = random_T_assign(var)
-		pre_test(T, fd)
 		pc = 0
 		for j in xrange(1, MAX_FLIPS+1):
-			if test_sat(T, fd):
+			if test_sat(T):
 				print "flips: %d, tries: %d" % (j, i)
 				print "get one solution: ", T
 				return
 
-			tmp = get_candidate(T, fd)
+			tmp = get_candidate(T)
 			if tmp == -1 or pc == tmp:
 				break
 			#update T
@@ -121,8 +109,8 @@ def GSAT():
 			T[pc] = not T[pc]
 
 	print "no solution"
-	fd.close()
 
 #GSAT()
-cnf.test()
-GSAT()
+if __name__ == "__main__":
+	cnf.test()
+	GSAT()
