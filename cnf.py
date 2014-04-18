@@ -4,6 +4,7 @@ import fileinput
 N = 0
 cnf_file = "queens.cnf"
 clauses = 0
+split_pattern = ", "
 
 def check_file_exist(name):
 	if exists(cnf_file):
@@ -76,7 +77,8 @@ def LessEqualOne_CNF_write(fd, array, num):
 def insert_cnf_head(var):
 	for line in fileinput.input(cnf_file, inplace=1):
 		if fileinput.isfirstline():
-			print "p cnf " + str(var) + " " + str(clauses)
+			print "p" + split_pattern + " cnf" + split_pattern \
+				+ str(var) + split_pattern + str(clauses)
 			
 		print line.rstrip()
 
@@ -126,4 +128,3 @@ def test():
 	queens_cnf_input()
 	cnf_create(N_queens_cnf_create)
 
-test()
