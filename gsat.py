@@ -3,7 +3,11 @@ import cnf
 
 MAX_FLIPS = 0
 MAX_TRIES = 1000
-CONTENT=[]
+CONTENT = []
+
+num_flips = 0.
+num_tries = 0.
+solution = {}
 
 split_pattern = cnf.split_pattern
 
@@ -97,8 +101,10 @@ def GSAT():
 		pc = 0
 		for j in xrange(1, MAX_FLIPS+1):
 			if test_sat(T):
-				print "flips: %d, tries: %d" % (j, i)
-				print "get one solution: ", T
+				global solution, num_flips, num_tries
+				num_flips = num_flips + j
+				num_tries = num_tries + i
+				solution = T.copy()
 				return
 
 			tmp = get_candidate(T)
@@ -108,9 +114,19 @@ def GSAT():
 			pc = tmp
 			T[pc] = not T[pc]
 
-	print "no solution"
 
 #GSAT()
 if __name__ == "__main__":
+	from timeit import Timer
+	test_n = 1
 	cnf.test()
-	GSAT()
+	T = Timer("GSAT()", "from __main__ import GSAT")
+	print "running time: ", T.timeit(test_n)
+	if solution == {}:
+		print "no solution"
+	else:
+		print "get one solution: ", solution
+
+	print "flips: %f, tries: %f" % (num_flips/test_n, num_tries/test_n)
+#	import profile
+#	profile.run("GSAT()")
