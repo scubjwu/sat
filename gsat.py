@@ -1,5 +1,6 @@
 import random
 import cnf
+import math
 
 MAX_FLIPS = 0
 MAX_TRIES = 1000
@@ -15,6 +16,19 @@ def random_T_assign(num):
 	tmp_L = {}
 	for i in xrange(1, num+1):
 		tmp_L[i] = random.choice([False, True])
+
+	return tmp_L
+
+def new_random_T_assign(num):
+	tmp_L = {}
+	step = int(math.sqrt(num))
+	for i in xrange(1, num+1, step):
+		p = random.randrange(i, i+step)
+		for j in xrange(i, i+step):
+			if j == p:
+				tmp_L[j] = True
+			else:
+				tmp_L[j] = False
 
 	return tmp_L
 
@@ -97,7 +111,8 @@ def GSAT():
 	clauses = (int)(CONTENT[0][3])
 
 	for i in xrange(1, MAX_TRIES+1):
-		T = random_T_assign(var)
+		T = new_random_T_assign(var)
+	#	T = random_T_assign(var)
 		pc = 0
 		for j in xrange(1, MAX_FLIPS+1):
 			if test_sat(T):
@@ -118,7 +133,7 @@ def GSAT():
 #GSAT()
 if __name__ == "__main__":
 	from timeit import Timer
-	test_n = 1
+	test_n = 10
 	cnf.test()
 	T = Timer("GSAT()", "from __main__ import GSAT")
 	print "running time: ", T.timeit(test_n)
