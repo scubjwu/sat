@@ -12,7 +12,7 @@ CONTENT = []
 
 num_flips = 0.
 num_tries = 0.
-RW_P = 0.15
+RW_P = 0.35
 unsat_clause = 0
 solution = {}
 
@@ -174,7 +174,7 @@ def GWSAT():
 			T[pc] = not T[pc]
 
 def test():
-	test_n = 10
+	test_n = 100
 	T = Timer("GWSAT()", "from __main__ import GWSAT")
 	print "running time: ", T.timeit(test_n)/test_n
 	if solution == {}:
