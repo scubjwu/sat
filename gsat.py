@@ -1,6 +1,10 @@
 import random
 import cnf
 import math
+import profile
+from timeit import Timer
+
+#import pdb
 
 MAX_FLIPS = 0
 MAX_TRIES = 1000
@@ -8,6 +12,8 @@ CONTENT = []
 
 num_flips = 0.
 num_tries = 0.
+RW_P = 0.15
+unsat_clause = 0
 solution = {}
 
 split_pattern = cnf.split_pattern
@@ -32,46 +38,50 @@ def new_random_T_assign(num):
 
 	return tmp_L
 
-def cal_sn(T_assign):
+def verify_clause(n, T_assign):
+	res = False
+
+	for i in xrange(0, len(CONTENT[n])-1):
+		key = int(CONTENT[n][i])
+		if key < 0:
+			res = res or (not T_assign[-key])
+		else:
+			res = res or T_assign[key]
+
+		if res:
+			break
+	
+	return res
+
+def cal_sn(T_assign, pos):
 	sn = 0
 
 	for i in xrange(1, len(CONTENT)):
-		c_res = False
-		len_c = len(CONTENT[i]) - 1
-		for j in xrange(0, len_c):
-			key = int(CONTENT[i][j])
-			if key < 0:
-				c_res = c_res or (not T_assign[-key])
-			else:
-				c_res = c_res or T_assign[key]
+	#	pdb.set_trace()
+		if (not str(pos) in CONTENT[i]) and (not str(-pos) in CONTENT[i]):
+			continue
 
-			if c_res:
-				sn = sn + 1
-				break
+		if verify_clause(i, T_assign):
+			continue
+		
+		T_assign[pos] = not T_assign[pos]
 
-	
+		if verify_clause(i, T_assign):
+			sn = sn + 1
+
+		T_assign[pos] = not T_assign[pos]
+
 	return sn
 
 def test_sat(T_assign):
 	res = True
 
 	for i in xrange(1, len(CONTENT)):
+		res = res and verify_clause(i, T_assign)
 		if res == False:
-			break
-
-		c_res = False
-		len_c = len(CONTENT[i]) - 1
-		for j in xrange(0, len_c):
-			key = int(CONTENT[i][j])
-			if key < 0:
-				c_res = c_res or (not T_assign[-key])
-			else:
-				c_res = c_res or T_assign[key]
-
-			if c_res:
-				break
-
-		res = res and c_res
+			global unsat_clause
+			unsat_clause = i
+			break;
 
 	return res
 
@@ -81,15 +91,17 @@ def get_candidate(T_assign):
 
 	for i in xrange(1, len(T_assign)+1):
 		#flip and record...
-		T_assign[i] = not T_assign[i]
-		candidate_sn = cal_sn(T_assign)
+		candidate_sn = cal_sn(T_assign, i)
 		if candidate_sn > maxIncrease:
 			maxIncrease = candidate_sn
 			res = i
 
-		T_assign[i] = not T_assign[i]
-		
 	return res
+
+def get_candidate_rw():
+	pos = random.randrange(0, len(CONTENT[unsat_clause])-1)
+	tmp = math.fabs(int(CONTENT[unsat_clause][pos]))
+	return tmp
 
 def handle_cnf():
 	global CONTENT
@@ -125,23 +137,54 @@ def GSAT():
 			tmp = get_candidate(T)
 			if tmp == -1 or pc == tmp:
 				break
+			
 			#update T
 			pc = tmp
 			T[pc] = not T[pc]
 
+def GWSAT():
+	handle_cnf();
+	
+	var = (int)(CONTENT[0][2])
+	MAX_FLIPS = var*5
+	clauses = (int)(CONTENT[0][3])
 
-#GSAT()
-if __name__ == "__main__":
-	from timeit import Timer
+	for i in xrange(1, MAX_TRIES+1):
+		T = new_random_T_assign(var)
+	#	T = random_T_assign(var)
+		pc = 0
+		for j in xrange(1, MAX_FLIPS+1):
+			if test_sat(T):
+				global solution, num_flips, num_tries
+				num_flips = num_flips + j
+				num_tries = num_tries + i
+				solution = T.copy()
+				return
+
+			if random.random() > RW_P:
+				tmp = get_candidate(T)
+			else:
+				tmp = get_candidate_rw()
+
+			if tmp == -1 or tmp == pc:
+				break;
+
+			#update T
+			pc = tmp
+			T[pc] = not T[pc]
+
+def test():
 	test_n = 10
-	cnf.test()
-	T = Timer("GSAT()", "from __main__ import GSAT")
-	print "running time: ", T.timeit(test_n)
+	T = Timer("GWSAT()", "from __main__ import GWSAT")
+	print "running time: ", T.timeit(test_n)/test_n
 	if solution == {}:
 		print "no solution"
 	else:
 		print "get one solution: ", solution
+		print "flips: %f, tries: %f" % (num_flips/test_n, num_tries/test_n)
 
-	print "flips: %f, tries: %f" % (num_flips/test_n, num_tries/test_n)
-#	import profile
-#	profile.run("GSAT()")
+if __name__ == "__main__":
+	cnf.test()
+	test()
+#	profile.run("GWSAT()")
+
