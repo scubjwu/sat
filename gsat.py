@@ -14,6 +14,8 @@ num_flips = 0.
 num_tries = 0.
 RW_P = 0.35
 unsat_clause = 0
+tabu_list_len = 0
+tabu_list = []
 solution = {}
 
 split_pattern = cnf.split_pattern
@@ -98,6 +100,25 @@ def get_candidate(T_assign):
 
 	return res
 
+def get_tabu_candidate(T_assign):
+	res = -1
+	tabu_mem = {}
+
+	for i in xrange(1, len(T_assign)+1):
+		candidate_sn = cal_sn(T_assign, i)
+		tabu_mem[i]=cal_sn(T_assign, i)
+	
+	#sort tabu_mem
+	tabu_candidate = sorted(tabu_mem.items(), key=lambda  e:e[1], reverse=True)
+	#get the best candidate based on tabu list
+#	pdb.set_trace()
+	for candidate in tabu_candidate:
+		if tabu_list[candidate[0]-1] == 0:
+			res = candidate[0]
+			break
+
+	return res
+
 def get_candidate_rw():
 	pos = random.randrange(0, len(CONTENT[unsat_clause])-1)
 	tmp = math.fabs(int(CONTENT[unsat_clause][pos]))
@@ -173,8 +194,49 @@ def GWSAT():
 			pc = tmp
 			T[pc] = not T[pc]
 
+def GSAT_TABU():
+	handle_cnf();
+	
+	var = (int)(CONTENT[0][2])
+	MAX_FLIPS = var*5
+	clauses = (int)(CONTENT[0][3])
+
+	global tabu_list_len, tabu_list
+	tabu_list_len = (int)(0.01875 * var + 2.8125)
+
+	for i in xrange(1, MAX_TRIES+1):
+		T = new_random_T_assign(var)
+	#	T = random_T_assign(var)
+		pc = 0
+		tabu_list = [0]*var #init tabu list for every try
+		for j in xrange(1, MAX_FLIPS+1):
+			if test_sat(T):
+				global solution, num_flips, num_tries
+				num_flips = num_flips + j
+				num_tries = num_tries + i
+				solution = T.copy()
+				return
+
+			tmp = get_tabu_candidate(T)
+			if tmp == -1:
+				break
+			
+			#update T
+			pc = tmp
+			T[pc] = not T[pc]
+
+			#update tabu list
+			for t in xrange(var):
+				if t == pc-1:
+					tabu_list[t] = tabu_list_len
+				elif tabu_list[t] == 0:
+					continue
+				else:
+					tabu_list[t] = tabu_list[t] - 1
+			
 def test():
-	test_n = 100
+	test_n = 10
+#	T = Timer("GSAT_TABU()", "from __main__ import GSAT_TABU")
 	T = Timer("GWSAT()", "from __main__ import GWSAT")
 	print "running time: ", T.timeit(test_n)/test_n
 	if solution == {}:
