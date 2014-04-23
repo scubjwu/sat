@@ -5,6 +5,7 @@ import profile
 from timeit import Timer
 
 #import pdb
+random_type = 1
 
 class GSAT_TEST:
 	def __init__(self):
@@ -31,7 +32,7 @@ class GSAT_TEST:
 			print "unknown method..."
 
 	def run_test(self, obj):
-			num = 10
+			num = 100
 			T = Timer(obj.run)
 			print "Algorithm: #######" + obj.method + "#######"
 			print "running time: ", T.timeit(num)/num
@@ -160,8 +161,11 @@ class GSAT(GSAT_BASE):
 
 	def run(self):
 		for i in xrange(1, self.MAX_TRIES+1):
-			T = self.new_random_T_assign(self.var)
-		#	T = random_T_assign(var)
+			if random_type == 1:
+				T = self.new_random_T_assign(self.var)
+			else:
+				T = self.random_T_assign(self.var)
+
 			pc = 0
 			for j in xrange(1, self.MAX_FLIPS+1):
 				if self.test_sat(T):
@@ -204,8 +208,11 @@ class GWSAT(GSAT_BASE):
 		
 	def run(self):
 		for i in xrange(1, self.MAX_TRIES+1):
-			T = self.new_random_T_assign(self.var)
-		#	T = random_T_assign(var)
+			if random_type == 1:
+				T = self.new_random_T_assign(self.var)
+			else:
+				T = self.random_T_assign(self.var)
+
 			pc = 0
 			for j in xrange(1, self.MAX_FLIPS+1):
 				if self.test_sat(T):
@@ -256,8 +263,11 @@ class GSAT_TABU(GSAT_BASE):
 		
 	def run(self):
 		for i in xrange(1, self.MAX_TRIES+1):
-			T = self.new_random_T_assign(self.var)
-		#	T = random_T_assign(var)
+			if random_type == 1:
+				T = self.new_random_T_assign(self.var)
+			else:
+				T = self.random_T_assign(self.var)
+
 			pc = 0
 			self.tabu_list = [0]*self.var #init tabu list for every try
 			for j in xrange(1, self.MAX_FLIPS+1):
