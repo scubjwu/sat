@@ -183,7 +183,7 @@ class GWSAT(GSAT_BASE):
 	def __init__(self, method):
 		GSAT_BASE.__init__(self)
 		self.method = method
-		self.RW_P = 0.35
+		self.RW_P = 0.15
 		self.unsat_clause = 0
 		
 	def test_sat(self, T_assign):
